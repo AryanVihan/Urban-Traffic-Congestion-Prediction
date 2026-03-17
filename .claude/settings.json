@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501)",
+      "Bash(streamlit run:*)",
+      "Read(//c/Users/vajee/OneDrive/Desktop/Current proj/ForgeML Traffic Congestion Predictor/**)",
+      "Bash(taskkill /PID 12836 /F)",
+      "Bash(taskkill /PID 19040 /F)",
+      "Bash(taskkill /PID 22284 /F)",
+      "Bash(taskkill /PID 29656 /F)",
+      "Bash(taskkill //PID 12836 //F)",
+      "Bash(taskkill //PID 19040 //F)",
+      "Bash(taskkill //PID 22284 //F)",
+      "Bash(taskkill //PID 29656 //F)"
+    ]
+  }
+}

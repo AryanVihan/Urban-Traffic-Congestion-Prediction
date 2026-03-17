@@ -103,7 +103,7 @@ with st.sidebar:
       <div style="font-size:2.8rem;filter:drop-shadow(0 4px 14px rgba(99,102,241,0.4));
                   animation:float 5s ease-in-out infinite;">🚦</div>
       <div style="font-size:1.05rem;font-weight:800;letter-spacing:-0.01em;
-                  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                  background:linear-gradient(135deg,#7c3aed,#a78bfa);
                   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
                   background-clip:text;margin-top:6px;">Traffic Intelligence</div>
       <div style="font-size:0.72rem;color:#94a3b8;font-weight:500;margin-top:2px;
@@ -115,40 +115,42 @@ with st.sidebar:
     st.markdown("""
     <style>
     .nav-section-title {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.12em;
-        color: #6366f1;
+        color: #7c3aed;
         margin-top: 16px;
-        margin-bottom: 12px;
-        padding-left: 6px;
-        border-left: 3px solid #6366f1;
+        margin-bottom: 10px;
+        padding-left: 8px;
+        border-left: 3px solid rgba(124,58,237,0.7);
     }
     .nav-item {
-        background: rgba(99, 102, 241, 0.08);
-        border: 1px solid rgba(99, 102, 241, 0.2);
+        background: rgba(124, 58, 237, 0.06);
+        border: 1px solid rgba(124, 58, 237, 0.15);
         border-radius: 12px;
         padding: 12px 14px;
         margin-bottom: 8px;
         cursor: pointer;
         transition: all 0.25s ease;
-        font-size: 0.95rem;
+        font-size: 0.93rem;
         font-weight: 600;
-        color: #1e293b;
+        color: #cbd5e1;
         display: flex;
         align-items: center;
         gap: 10px;
     }
     .nav-item:hover {
-        background: rgba(99, 102, 241, 0.15);
-        border-color: rgba(99, 102, 241, 0.4);
+        background: rgba(124, 58, 237, 0.14);
+        border-color: rgba(124, 58, 237, 0.35);
         transform: translateX(4px);
+        color: #f1f5f9;
     }
     .nav-item-active {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
-        border: 2px solid #6366f1;
-        box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.28), rgba(167, 139, 250, 0.18));
+        border: 1px solid rgba(124, 58, 237, 0.5);
+        box-shadow: 0 0 18px rgba(124, 58, 237, 0.18);
+        color: #f1f5f9;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -230,7 +232,7 @@ with st.sidebar:
     st.divider()
     st.markdown("""
     <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;
-                letter-spacing:0.09em;color:#6366f1;margin-bottom:8px;">
+                letter-spacing:0.09em;color:#7c3aed;margin-bottom:8px;">
       ⚙️ Pipeline Status</div>""", unsafe_allow_html=True)
 
     if os.path.exists(MODEL_PATH):
@@ -256,13 +258,13 @@ with st.sidebar:
 
     st.markdown(f"""
     <div style="margin-top:16px;padding:10px 12px;
-                background:rgba(255,255,255,0.5);border-radius:10px;
-                border:1px solid rgba(255,255,255,0.7);">
-      <div style="font-size:0.68rem;color:#94a3b8;font-weight:600;
+                background:rgba(15,22,45,0.6);border-radius:10px;
+                border:1px solid rgba(124,58,237,0.18);">
+      <div style="font-size:0.68rem;color:#7c3aed;font-weight:700;
                   text-transform:uppercase;letter-spacing:0.08em;">Dataset</div>
-      <div style="font-size:0.80rem;color:#475569;font-weight:500;margin-top:3px;">
+      <div style="font-size:0.80rem;color:#e2e8f0;font-weight:500;margin-top:3px;">
         {os.path.basename(DATA_PATH)}</div>
-      <div style="font-size:0.72rem;color:#94a3b8;margin-top:2px;">
+      <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
         Metro I-94 · 2012–2018 · 48K records</div>
     </div>""", unsafe_allow_html=True)
 
@@ -285,7 +287,7 @@ if page == "📊 Overview":
         "Metro I-94 Interstate · Minneapolis – Saint Paul · 2012–2018"), unsafe_allow_html=True)
 
     st.markdown(metric_row([
-        {"icon": "📁", "value": f"{len(df):,}",                        "label": "Total Records",    "color": "#6366f1"},
+        {"icon": "📁", "value": f"{len(df):,}",                        "label": "Total Records",    "color": "#7c3aed"},
         {"icon": "📅", "value": str(df['date_time'].dt.year.nunique()), "label": "Years of Data",    "color": "#8b5cf6"},
         {"icon": "🚗", "value": f"{int(df['traffic_volume'].mean()):,}","label": "Avg Vol / hr",     "color": "#06b6d4"},
         {"icon": "⏰", "value": f"{peak_data['peak_hour']}:00",         "label": "Peak Hour",        "color": "#f59e0b"},
@@ -365,7 +367,7 @@ elif page == "📈 Traffic Patterns":
                     f"🟠 **Evening rush:** {EVENING_RUSH[0]}–{EVENING_RUSH[1]}:00")
         st.markdown(metric_row([
             {"icon": "⏰", "value": f"{peak_data['peak_hour']}:00",    "label": "Peak Hour",   "color": "#f97316"},
-            {"icon": "🌙", "value": f"{peak_data['trough_hour']}:00",  "label": "Quiet Hour",  "color": "#6366f1"},
+            {"icon": "🌙", "value": f"{peak_data['trough_hour']}:00",  "label": "Quiet Hour",  "color": "#7c3aed"},
             {"icon": "🚗", "value": f"{int(peak_data['rush_avg']):,}", "label": "Rush Avg/hr", "color": "#ef4444"},
         ]), unsafe_allow_html=True)
 
@@ -503,7 +505,7 @@ elif page == "🔮 Predict":
                     st.write(f["detail"])
         with col_p:
             urgency_colors = {"CRITICAL":"#ef4444","HIGH":"#f97316","NORMAL":"#f59e0b","LOW":"#22c55e"}
-            urg_col = urgency_colors.get(plan["urgency"], "#6366f1")
+            urg_col = urgency_colors.get(plan["urgency"], "#7c3aed")
             st.markdown(glass_section(
                 f"Action Plan &nbsp; {glass_badge(plan['urgency'], urg_col)}", "⚡"),
                 unsafe_allow_html=True)
@@ -523,7 +525,7 @@ elif page == "🔮 Predict":
                     st.markdown(
                         f"<div style='padding:6px 12px;margin-bottom:6px;"
                         f"background:rgba(99,102,241,0.06);border-radius:10px;"
-                        f"border-left:3px solid #6366f1;font-size:0.88rem'>{a}</div>",
+                        f"border-left:3px solid #7c3aed;font-size:0.88rem'>{a}</div>",
                         unsafe_allow_html=True)
 
         with st.expander("🤖 Agent Execution Trace"):
@@ -542,7 +544,7 @@ elif page == "💡 AI Insights":
     p_color  = {"HIGH":"#ef4444","MEDIUM":"#f97316","LOW":"#22c55e"}
 
     for ins in sorted(insights, key=lambda x: p_order.get(x["priority"],3)):
-        pc = p_color.get(ins["priority"],"#6366f1")
+        pc = p_color.get(ins["priority"],"#7c3aed")
         st.markdown(
             f"<div style='"
             f"background:rgba(255,255,255,0.70);"
@@ -856,7 +858,7 @@ elif page == "🎯 Risk Scoring":
             {"icon": "🔴", "value": f"{severe_hrs}/24",       "label": "Severe Hours",    "color": "#ef4444"},
             {"icon": "🟠", "value": f"{high_hrs}/24",         "label": "High Hours",      "color": "#f97316"},
             {"icon": "⏰", "value": peak_hr,                  "label": "Peak Risk Hour",  "color": "#8b5cf6"},
-            {"icon": "📊", "value": f"{avg_risk:.0f}/100",    "label": "Avg Risk Score",  "color": "#6366f1"},
+            {"icon": "📊", "value": f"{avg_risk:.0f}/100",    "label": "Avg Risk Score",  "color": "#7c3aed"},
         ]), unsafe_allow_html=True)
 
         st.plotly_chart(make_risk_chart(risk_df),    use_container_width=True)
@@ -1003,7 +1005,7 @@ elif page == "🤖 MCP Live Intelligence":
                 unsafe_allow_html=True,
             )
             for seg in alerts["high_or_severe_segments"]:
-                seg_col = col_map.get(seg["segment_label"], "#6366f1")
+                seg_col = col_map.get(seg["segment_label"], "#7c3aed")
                 st.markdown(
                     f"<div style='padding:4px 10px;margin-bottom:4px;font-size:0.84rem;"
                     f"border-left:3px solid {seg_col};color:#374151'>"
@@ -1020,7 +1022,7 @@ elif page == "🤖 MCP Live Intelligence":
         # Conditions used
         cond = now_pred["conditions"]
         st.markdown(metric_row([
-            {"icon": "⏰", "value": f"{cond['hour']:02d}:00",  "label": "Current Hour",   "color": "#6366f1"},
+            {"icon": "⏰", "value": f"{cond['hour']:02d}:00",  "label": "Current Hour",   "color": "#7c3aed"},
             {"icon": "🌡️", "value": f"{live_temp}°C",          "label": "Temperature",    "color": "#06b6d4"},
             {"icon": "🌧️", "value": f"{live_rain}mm/hr",       "label": "Rainfall",       "color": "#3b82f6"},
             {"icon": "🚗", "value": f"{live_lag:,}",           "label": "Lag Volume",     "color": "#8b5cf6"},
@@ -1051,7 +1053,7 @@ elif page == "🤖 MCP Live Intelligence":
             {"icon": "🔴", "value": f"{severe_hrs}/24",       "label": "Severe Hours",    "color": "#ef4444"},
             {"icon": "🟠", "value": f"{high_hrs}/24",         "label": "High Hours",      "color": "#f97316"},
             {"icon": "⏰", "value": peak_risk["hour"],        "label": "Peak Risk Hour",  "color": "#8b5cf6"},
-            {"icon": "📊", "value": f"{avg_risk:.0f}/100",    "label": "Avg Risk Score",  "color": "#6366f1"},
+            {"icon": "📊", "value": f"{avg_risk:.0f}/100",    "label": "Avg Risk Score",  "color": "#7c3aed"},
         ]), unsafe_allow_html=True)
 
         st.plotly_chart(make_risk_chart(risk_df), use_container_width=True)
@@ -1069,7 +1071,7 @@ elif page == "🤖 MCP Live Intelligence":
         )
         rush_cols = st.columns(len(rush_hours))
         for i, rp in enumerate(rush_preds):
-            rc = col_map.get(rp["label"], "#6366f1")
+            rc = col_map.get(rp["label"], "#7c3aed")
             rush_cols[i].markdown(
                 f"<div style='background:linear-gradient(135deg,{rc}22,{rc}11);"
                 f"border:1px solid {rc}44;border-radius:14px;padding:10px 8px;"
@@ -1089,7 +1091,7 @@ elif page == "🤖 MCP Live Intelligence":
         summary      = corridor["summary"]
 
         # Summary KPIs
-        b_col = col_map.get(base_pred["label"], "#6366f1")
+        b_col = col_map.get(base_pred["label"], "#7c3aed")
         st.markdown(metric_row([
             {"icon": "🚦", "value": base_pred["label"],           "label": "Global Forecast",  "color": b_col},
             {"icon": "🔴", "value": str(summary["severe_count"]), "label": "Severe Segments",  "color": "#ef4444"},
@@ -1102,7 +1104,7 @@ elif page == "🤖 MCP Live Intelligence":
         st.markdown(glass_section("All 16 I-94 Segments", "🗺️"), unsafe_allow_html=True)
         seg_cols_a = st.columns(2)
         for i, seg in enumerate(segments_lst):
-            sc = col_map.get(seg["segment_label"], "#6366f1")
+            sc = col_map.get(seg["segment_label"], "#7c3aed")
             factor_icon = "⚠️" if seg["is_bottleneck"] else "✅"
             seg_cols_a[i % 2].markdown(
                 f"<div style='background:rgba(255,255,255,0.65);backdrop-filter:blur(10px);"
@@ -1206,9 +1208,9 @@ elif page == "🤖 MCP Live Intelligence":
             st.markdown(
                 f"<div style='padding:8px 14px;margin-bottom:6px;"
                 f"background:rgba(255,255,255,0.60);border-radius:12px;"
-                f"border-left:3px solid #6366f1;font-size:0.85rem;"
+                f"border-left:3px solid #7c3aed;font-size:0.85rem;"
                 f"animation:fadeInLeft 0.3s ease both'>"
-                f"<span style='font-weight:700;color:#6366f1'>{server_type}</span> "
+                f"<span style='font-weight:700;color:#7c3aed'>{server_type}</span> "
                 f"<span style='color:#374151'>{query}</span></div>",
                 unsafe_allow_html=True,
             )

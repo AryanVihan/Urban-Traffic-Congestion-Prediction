@@ -9,7 +9,10 @@
       "Bash(grep -r data-testid C:/Users/vajee/AppData/Roaming/Python/Python312/site-packages/streamlit/static/static/js/ --include=*.js -l)",
       "Bash(grep -o \"\"data-testid\"\",\"\"[^\"\"]*\"\" C:/Users/vajee/AppData/Roaming/Python/Python312/site-packages/streamlit/static/static/js/index.B0H9IXUJ.js)",
       "Bash(grep -o data-testid=\"\"[^\"\"]*\"\" C:/Users/vajee/AppData/Roaming/Python/Python312/site-packages/streamlit/static/static/js/index.B0H9IXUJ.js)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(curl -s http://localhost:8501)"
     ]
   }
 }

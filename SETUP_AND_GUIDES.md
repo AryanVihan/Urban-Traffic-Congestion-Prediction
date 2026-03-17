@@ -133,7 +133,7 @@ python -m mcp_servers.map_server
 ```
 
 **Integration Guide:**
-See `mcp_servers/mcp_config.json` for:
+See `mcp_config.json` (project root) for:
 - Claude Desktop configuration
 - Full tool/resource list
 - Example queries per server
@@ -327,8 +327,9 @@ ForgeML Traffic Congestion Predictor/
 │   ├── analytics_server.py             # Analytics tools
 │   ├── insights_server.py              # Insight tools
 │   ├── map_server.py                   # Mapping tools
-│   ├── bridge.py                       # Streamlit-MCP bridge
-│   └── mcp_config.json                 # Server registry
+│   └── bridge.py                       # Streamlit-MCP bridge
+│
+├── mcp_config.json                     # MCP server registry (Claude Desktop)
 │
 ├── Metro_Interstate_Traffic_Volume.csv # Raw data (48K records)
 ├── model.pkl                           # Trained model
