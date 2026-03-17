@@ -1,0 +1,17 @@
+{
+  "HistGradientBoosting": {
+    "accuracy": 0.9364,
+    "f1_weighted": 0.9363,
+    "train_time_sec": 14.8
+  },
+  "RandomForest": {
+    "accuracy": 0.9263,
+    "f1_weighted": 0.9267,
+    "train_time_sec": 15.6
+  },
+  "ExtraTrees": {
+    "accuracy": 0.9104,
+    "f1_weighted": 0.9109,
+    "train_time_sec": 6.7
+  }
+}

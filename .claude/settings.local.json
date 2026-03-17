@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python -c \"import plotly; print\\(''plotly'', plotly.__version__\\)\")",
+      "Bash(python -c \":*)",
+      "Bash(pip show:*)",
+      "Bash(python -c \"import streamlit; print\\(streamlit.__version__\\)\")",
+      "Bash(grep -r data-testid C:/Users/vajee/AppData/Roaming/Python/Python312/site-packages/streamlit/static/static/js/ --include=*.js -l)",
+      "Bash(grep -o \"\"data-testid\"\",\"\"[^\"\"]*\"\" C:/Users/vajee/AppData/Roaming/Python/Python312/site-packages/streamlit/static/static/js/index.B0H9IXUJ.js)",
+      "Bash(grep -o data-testid=\"\"[^\"\"]*\"\" C:/Users/vajee/AppData/Roaming/Python/Python312/site-packages/streamlit/static/static/js/index.B0H9IXUJ.js)",
+      "Bash(python:*)"
+    ]
+  }
+}
