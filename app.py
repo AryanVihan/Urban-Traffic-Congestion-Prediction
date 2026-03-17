@@ -111,12 +111,121 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
     st.divider()
 
+    # Enhanced navigation with categories
+    st.markdown("""
+    <style>
+    .nav-section-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #6366f1;
+        margin-top: 16px;
+        margin-bottom: 12px;
+        padding-left: 6px;
+        border-left: 3px solid #6366f1;
+    }
+    .nav-item {
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .nav-item:hover {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: rgba(99, 102, 241, 0.4);
+        transform: translateX(4px);
+    }
+    .nav-item-active {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+        border: 2px solid #6366f1;
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Radio selection for page logic (hidden)
     page = st.radio("Navigate", [
         "📊 Overview", "📈 Traffic Patterns",
         "🔮 Predict", "💡 AI Insights", "🏆 Model Report",
         "🗺️ Traffic Map", "🔥 Heatmaps", "🌦️ Weather Analysis",
         "🎯 Risk Scoring", "🤖 MCP Live Intelligence",
-    ], label_visibility="collapsed")
+    ], label_visibility="collapsed", key="page_nav")
+
+    # Visual navigation menu
+    st.markdown('<div class="nav-section-title">📊 Core Analytics</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '📊 Overview' else ''}">
+        📊 Overview
+    </div>""", unsafe_allow_html=True)
+    st.caption("System summary, KPIs & congestion dist.")
+    
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '📈 Traffic Patterns' else ''}">
+        📈 Traffic Patterns
+    </div>""", unsafe_allow_html=True)
+    st.caption("Hourly, daily, seasonal trends")
+
+    st.markdown('<div class="nav-section-title">🔮 Prediction & AI</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🔮 Predict' else ''}">
+        🔮 Predict
+    </div>""", unsafe_allow_html=True)
+    st.caption("Real-time congestion prediction")
+
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '💡 AI Insights' else ''}">
+        💡 AI Insights
+    </div>""", unsafe_allow_html=True)
+    st.caption("Explainable AI & recommendations")
+
+    st.markdown('<div class="nav-section-title">📈 Visualizations</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🏆 Model Report' else ''}">
+        🏆 Model Report
+    </div>""", unsafe_allow_html=True)
+    st.caption("Feature importance & metrics")
+
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🗺️ Traffic Map' else ''}">
+        🗺️ Traffic Map
+    </div>""", unsafe_allow_html=True)
+    st.caption("Interactive I-94 corridor map")
+
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🔥 Heatmaps' else ''}">
+        🔥 Heatmaps
+    </div>""", unsafe_allow_html=True)
+    st.caption("Time-series heatmaps & patterns")
+
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🌦️ Weather Analysis' else ''}">
+        🌦️ Weather Analysis
+    </div>""", unsafe_allow_html=True)
+    st.caption("Weather-traffic correlations")
+
+    st.markdown('<div class="nav-section-title">⚠️ Risk & Alerts</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🎯 Risk Scoring' else ''}">
+        🎯 Risk Scoring
+    </div>""", unsafe_allow_html=True)
+    st.caption("Daily risk assessment & timeline")
+
+    st.markdown('<div class="nav-section-title">🤖 Advanced Tools</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '🤖 MCP Live Intelligence' else ''}">
+        🤖 MCP Live Intelligence
+    </div>""", unsafe_allow_html=True)
+    st.caption("Real-time MCP server integration")
 
     st.divider()
     st.markdown("""
