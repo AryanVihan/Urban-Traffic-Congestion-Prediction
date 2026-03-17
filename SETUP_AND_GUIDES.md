@@ -176,31 +176,40 @@ The dashboard has **10 interactive pages** in the sidebar:
 - ROC-AUC curves
 - Model training details (accuracy, precision, F1)
 
-#### 6. **🗺️ Traffic Map**
+#### 6. **� Model Comparison**
+- Side-by-side comparison of 3 models (HistGradientBoosting, RandomForest, ExtraTrees)
+- Accuracy & F1-score comparison charts
+- Individual confusion matrices for each model
+- Per-class F1-scores across all models
+- Holistic radar chart for multi-metric comparison
+- Training time efficiency analysis
+- Detailed explanation of why HistGradientBoosting is the best model
+
+#### 7. **�🗺️ Traffic Map**
 - Interactive map of I-94 corridor (all 16 segments)
 - Real-time color coding (Green/Yellow/Orange/Red)
 - Click segments for detailed history
 - Bottleneck identification
 
-#### 7. **🔥 Heatmaps**
+#### 8. **🔥 Heatmaps**
 - Congestion heatmap (when is traffic worst?)
 - Weather-traffic correlation
 - Temperature-volume scatter plot
 - Rain impact analysis
 
-#### 8. **🌦️ Weather Analysis**
+#### 9. **🌦️ Weather Analysis**
 - Weather metrics and severity
 - Weather-traffic relationships
 - Temperature & precipitation effects
 - Seasonal patterns
 
-#### 9. **🎯 Risk Scoring**
+#### 10. **🎯 Risk Scoring**
 - Daily risk assessment (0-100 score)
 - 24-hour risk timeline
 - Segment-by-segment risk breakdown
 - Predictive alerts
 
-#### 10. **🤖 MCP Live Intelligence**
+#### 11. **🤖 MCP Live Intelligence**
 - Real-time predictions powered by MCP servers
 - 4 tabs:
   - **⚡ Live Now** — Current congestion + next-hour outlook

@@ -51,6 +51,8 @@ from analytics import (
     make_temp_traffic, make_weather_severity_bar,
     make_weekday_weekend_overlay, make_weekday_weekend_by_month,
     make_congestion_profile, compute_24h_risk, make_risk_chart, make_risk_timeline,
+    make_model_metrics_comparison, make_model_training_time_comparison,
+    make_confusion_matrix_heatmap, make_per_class_metrics_comparison, make_model_radar_comparison,
 )
 from map_view import create_i94_map
 from streamlit_folium import folium_static
@@ -70,6 +72,7 @@ LEVEL_BG     = {"Low":"#f0fdf4","Medium":"#fefce8","High":"#fff7ed","Severe":"#f
 MODEL_PATH   = os.path.join(DIR, "model.pkl")
 FI_PATH      = os.path.join(DIR, "feature_importance.csv")
 RES_PATH     = os.path.join(DIR, "model_results.json")
+COMP_PATH    = os.path.join(DIR, "model_comparison.json")
 
 
 # ── Cached loaders ───────────────────────────────────────────────
@@ -90,6 +93,10 @@ def load_fi():
 @st.cache_data
 def load_results():
     return json.load(open(RES_PATH)) if os.path.exists(RES_PATH) else None
+
+@st.cache_data
+def load_comparison_results():
+    return json.load(open(COMP_PATH)) if os.path.exists(COMP_PATH) else None
 
 @st.cache_resource(show_spinner="Connecting MCP bridge…")
 def get_mcp_bridge():
@@ -158,7 +165,7 @@ with st.sidebar:
     # Radio selection for page logic (hidden)
     page = st.radio("Navigate", [
         "📊 Overview", "📈 Traffic Patterns",
-        "🔮 Predict", "💡 AI Insights", "🏆 Model Report",
+        "🔮 Predict", "💡 AI Insights", "🏆 Model Report", "📊 Model Comparison",
         "🗺️ Traffic Map", "🔥 Heatmaps", "🌦️ Weather Analysis",
         "🎯 Risk Scoring", "🤖 MCP Live Intelligence",
     ], label_visibility="collapsed", key="page_nav")
@@ -198,7 +205,13 @@ with st.sidebar:
     st.caption("Feature importance & metrics")
 
     st.markdown(f"""
-    <div class="nav-item {'nav-item-active' if page == '🗺️ Traffic Map' else ''}">
+    <div class="nav-item {'nav-item-active' if page == '� Model Comparison' else ''}">
+        📊 Model Comparison
+    </div>""", unsafe_allow_html=True)
+    st.caption("3-model comparison & confusion matrices")
+
+    st.markdown(f"""
+    <div class="nav-item {'nav-item-active' if page == '�🗺️ Traffic Map' else ''}">
         🗺️ Traffic Map
     </div>""", unsafe_allow_html=True)
     st.caption("Interactive I-94 corridor map")
@@ -631,7 +644,128 @@ elif page == "🏆 Model Report":
 
 
 # ════════════════════════════════════════════════════════════════
-#  PAGE 6 — TRAFFIC MAP
+#  PAGE 6 — MODEL COMPARISON
+# ════════════════════════════════════════════════════════════════
+elif page == "📊 Model Comparison":
+    st.markdown(page_header("📊", "3-Model Comparison Analysis",
+        "HistGradientBoosting vs RandomForest vs ExtraTrees · Full metrics & confusion matrices"), unsafe_allow_html=True)
+
+    comp_results = load_comparison_results()
+    
+    if comp_results is None:
+        st.warning("⚠️ Model comparison data not found. Train the model first (sidebar button).")
+        st.stop()
+
+    models = list(comp_results.keys())
+    
+    # ────────────────────────────────────────────────────────────
+    # Tab 1: Metrics Overview
+    # ────────────────────────────────────────────────────────────
+    t1, t2, t3, t4, t5 = st.tabs(["📊 Metrics", "🔥 Confusion Matrices", "⭐ Per-Class F1", "🎯 Radar Chart", "🕐 Training Time"])
+
+    with t1:
+        st.subheader("Overall Performance Comparison")
+        st.plotly_chart(make_model_metrics_comparison(comp_results), use_container_width=True)
+        
+        st.divider()
+        st.subheader("Detailed Performance Table")
+        metrics_data = []
+        for model_name in models:
+            model_data = comp_results[model_name]
+            metrics_data.append({
+                "Model": model_name,
+                "Accuracy": f"{model_data['accuracy']:.4f}",
+                "F1 (Weighted)": f"{model_data['f1_weighted']:.4f}",
+                "Training Time (s)": f"{model_data['train_time_sec']:.1f}",
+            })
+        
+        metrics_df = pd.DataFrame(metrics_data)
+        st.dataframe(
+            metrics_df.style.highlight_max(subset=["Accuracy", "F1 (Weighted)"], color="#bbf7d0"),
+            hide_index=True, width="stretch"
+        )
+
+        # Winner announcement
+        best_model = max(models, key=lambda m: comp_results[m]["f1_weighted"])
+        st.success(f"""
+        ✅ **Best Model: {best_model}**
+        
+        - Accuracy: {comp_results[best_model]['accuracy']:.4f}
+        - F1-Score: {comp_results[best_model]['f1_weighted']:.4f}
+        - Training Time: {comp_results[best_model]['train_time_sec']:.1f}s
+        
+        This model has been selected and deployed as the main predictor.
+        """)
+
+    with t2:
+        st.subheader("Confusion Matrices")
+        st.info("Each cell represents predictions for actual congestion levels. Diagonal = correct predictions.")
+        
+        cols = st.columns(len(models))
+        for idx, model_name in enumerate(models):
+            with cols[idx]:
+                cm = comp_results[model_name]["confusion_matrix"]
+                fig = make_confusion_matrix_heatmap(cm, CONGESTION_LABELS, model_name)
+                st.plotly_chart(fig, use_container_width=True)
+
+    with t3:
+        st.subheader("Per-Class F1-Score Across Models")
+        st.info("Shows how each model performs on individual congestion levels (Low/Medium/High/Severe).")
+        st.plotly_chart(make_per_class_metrics_comparison(comp_results, CONGESTION_LABELS), use_container_width=True)
+        
+        st.divider()
+        st.subheader("Per-Class Detailed Breakdown")
+        for label in CONGESTION_LABELS:
+            st.markdown(f"**{label} Congestion Level**")
+            class_metrics = []
+            for model_name in models:
+                report = comp_results[model_name]["classification_report"]
+                label_data = report.get(label, {})
+                class_metrics.append({
+                    "Model": model_name,
+                    "Precision": f"{label_data.get('precision', 0):.4f}",
+                    "Recall": f"{label_data.get('recall', 0):.4f}",
+                    "F1-Score": f"{label_data.get('f1-score', 0):.4f}",
+                    "Support": int(label_data.get('support', 0)),
+                })
+            class_df = pd.DataFrame(class_metrics)
+            st.dataframe(class_df, hide_index=True, use_container_width=True)
+            st.divider()
+
+    with t4:
+        st.subheader("Holistic Multi-Metric Radar Chart")
+        st.info("Visualize all key metrics at once. Larger area = better overall performance.")
+        st.plotly_chart(make_model_radar_comparison(comp_results, CONGESTION_LABELS), use_container_width=True)
+
+    with t5:
+        st.subheader("Training Efficiency")
+        st.plotly_chart(make_model_training_time_comparison(comp_results), use_container_width=True)
+        
+        st.divider()
+        st.subheader("Why These Models?")
+        comparison_text = f"""
+        All three models were trained on the same dataset with balanced hyperparameters:
+        
+        1. **HistGradientBoosting** — Modern gradient boosting that handles large datasets efficiently
+           - Accuracy: {comp_results['HistGradientBoosting']['accuracy']:.4f}
+           - Training Time: {comp_results['HistGradientBoosting']['train_time_sec']:.1f}s
+           - **Best choice for production** ✅
+        
+        2. **RandomForest** — Ensemble of random decision trees, widely trusted baseline
+           - Accuracy: {comp_results['RandomForest']['accuracy']:.4f}
+           - Training Time: {comp_results['RandomForest']['train_time_sec']:.1f}s
+           - Strong performance, slightly slower
+        
+        3. **ExtraTrees** — Extra randomized trees, fast training with competitive performance
+           - Accuracy: {comp_results['ExtraTrees']['accuracy']:.4f}
+           - Training Time: {comp_results['ExtraTrees']['train_time_sec']:.1f}s
+           - Fastest training, slightly lower accuracy
+        """
+        st.markdown(comparison_text)
+
+
+# ════════════════════════════════════════════════════════════════
+#  PAGE 7 — TRAFFIC MAP
 # ════════════════════════════════════════════════════════════════
 elif page == "🗺️ Traffic Map":
     st.markdown(page_header("🗺️", "Metro I-94 Live Traffic Map",
@@ -698,7 +832,7 @@ elif page == "🗺️ Traffic Map":
 
 
 # ════════════════════════════════════════════════════════════════
-#  PAGE 7 — HEATMAPS & CALENDAR
+#  PAGE 8 — HEATMAPS & CALENDAR
 # ════════════════════════════════════════════════════════════════
 elif page == "🔥 Heatmaps":
     st.markdown(page_header("🔥", "Traffic Heatmaps & Calendar",
@@ -747,7 +881,7 @@ elif page == "🔥 Heatmaps":
 
 
 # ════════════════════════════════════════════════════════════════
-#  PAGE 8 — WEATHER ANALYSIS
+#  PAGE 9 — WEATHER ANALYSIS
 # ════════════════════════════════════════════════════════════════
 elif page == "🌦️ Weather Analysis":
     st.markdown(page_header("🌦️", "Weather Impact Analysis",
@@ -805,7 +939,7 @@ elif page == "🌦️ Weather Analysis":
 
 
 # ════════════════════════════════════════════════════════════════
-#  PAGE 9 — RISK SCORING & WEEKDAY VS WEEKEND
+#  PAGE 10 — RISK SCORING & WEEKDAY VS WEEKEND
 # ════════════════════════════════════════════════════════════════
 elif page == "🎯 Risk Scoring":
     st.markdown(page_header("🎯", "Congestion Risk Scoring",
@@ -909,7 +1043,7 @@ elif page == "🎯 Risk Scoring":
 
 
 # ════════════════════════════════════════════════════════════════
-#  PAGE 10 — MCP LIVE INTELLIGENCE
+#  PAGE 11 — MCP LIVE INTELLIGENCE
 # ════════════════════════════════════════════════════════════════
 elif page == "🤖 MCP Live Intelligence":
     st.markdown(page_header("🤖", "MCP Live Intelligence",

@@ -1,17 +1,17 @@
 {
   "HistGradientBoosting": {
-    "accuracy": 0.9364,
-    "f1_weighted": 0.9363,
-    "train_time_sec": 14.8
+    "accuracy": 0.9369,
+    "f1_weighted": 0.9368,
+    "train_time_sec": 5.0
   },
   "RandomForest": {
-    "accuracy": 0.9263,
-    "f1_weighted": 0.9267,
-    "train_time_sec": 15.6
+    "accuracy": 0.9254,
+    "f1_weighted": 0.9259,
+    "train_time_sec": 4.4
   },
   "ExtraTrees": {
-    "accuracy": 0.9104,
-    "f1_weighted": 0.9109,
-    "train_time_sec": 6.7
+    "accuracy": 0.9106,
+    "f1_weighted": 0.9111,
+    "train_time_sec": 2.1
   }
 }

@@ -496,3 +496,179 @@ def make_risk_timeline(risk_df: pd.DataFrame) -> go.Figure:
         xaxis=dict(tickangle=-45),
     )
     return fig
+
+
+# ── MODEL COMPARISON VISUALIZATIONS ────────────────────────────────────────────
+def make_model_metrics_comparison(results: dict) -> go.Figure:
+    """Bar chart comparing accuracy and F1 scores across all models."""
+    models = list(results.keys())
+    accuracy = [results[m]["accuracy"] for m in models]
+    f1 = [results[m]["f1_weighted"] for m in models]
+    
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=("Accuracy Comparison", "F1-Score Comparison"),
+        specs=[[{"type": "bar"}, {"type": "bar"}]],
+    )
+    
+    colors = ["#6366f1", "#8b5cf6", "#ec4899"]
+    
+    fig.add_trace(
+        go.Bar(x=models, y=accuracy, name="Accuracy", marker_color=colors,
+               text=[f"{a:.2%}" for a in accuracy], textposition="auto",
+               hovertemplate="<b>%{x}</b><br>Accuracy: %{y:.4f}<extra></extra>"),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Bar(x=models, y=f1, name="F1-Score", marker_color=colors,
+               text=[f"{f:.2%}" for f in f1], textposition="auto",
+               hovertemplate="<b>%{x}</b><br>F1-Score: %{y:.4f}<extra></extra>"),
+        row=1, col=2
+    )
+    
+    fig.update_yaxes(range=[0.85, 1.0], row=1, col=1)
+    fig.update_yaxes(range=[0.85, 1.0], row=1, col=2)
+    fig.update_layout(
+        height=400,
+        showlegend=False,
+        plot_bgcolor="#f9fafb",
+        paper_bgcolor="#f9fafb",
+    )
+    return fig
+
+
+def make_model_training_time_comparison(results: dict) -> go.Figure:
+    """Bar chart showing training time for each model."""
+    models = list(results.keys())
+    times = [results[m]["train_time_sec"] for m in models]
+    
+    fig = go.Figure(go.Bar(
+        x=models,
+        y=times,
+        marker_color=["#10b981", "#f59e0b", "#ef4444"],
+        text=[f"{t:.1f}s" for t in times],
+        textposition="auto",
+        hovertemplate="<b>%{x}</b><br>Training Time: %{y:.1f}s<extra></extra>",
+    ))
+    fig.update_layout(
+        title="Model Training Time Comparison",
+        xaxis_title="Model",
+        yaxis_title="Time (seconds)",
+        height=350,
+        plot_bgcolor="#f9fafb",
+        paper_bgcolor="#f9fafb",
+    )
+    return fig
+
+
+def make_confusion_matrix_heatmap(cm: list, labels: list, model_name: str) -> go.Figure:
+    """Confusion matrix heatmap for a single model."""
+    cm_array = np.array(cm)
+    
+    fig = go.Figure(go.Heatmap(
+        z=cm_array,
+        x=labels,
+        y=labels,
+        colorscale="Blues",
+        text=cm_array,
+        texttemplate="%{text}",
+        textfont={"size": 11},
+        colorbar=dict(title="Count"),
+    ))
+    fig.update_layout(
+        title=f"Confusion Matrix — {model_name}",
+        xaxis_title="Predicted",
+        yaxis_title="Actual",
+        height=450,
+        width=500,
+        plot_bgcolor="#f9fafb",
+        paper_bgcolor="#f9fafb",
+    )
+    return fig
+
+
+def make_per_class_metrics_comparison(results: dict, labels: list) -> go.Figure:
+    """Line chart comparing precision/recall/f1 for each class across models."""
+    models = list(results.keys())
+    
+    # Extract per-class F1 scores
+    fig = make_subplots(
+        rows=1, cols=len(labels),
+        subplot_titles=[f"{label} F1-Score" for label in labels],
+        specs=[[{"type": "bar"} for _ in labels]],
+    )
+    
+    colors = ["#6366f1", "#8b5cf6", "#ec4899"]
+    
+    for class_idx, label in enumerate(labels):
+        f1_scores = []
+        for model_name in models:
+            report = results[model_name]["classification_report"]
+            f1_scores.append(report.get(label, {}).get("f1-score", 0))
+        
+        fig.add_trace(
+            go.Bar(
+                x=models,
+                y=f1_scores,
+                marker_color=colors,
+                name=label,
+                text=[f"{f:.2%}" for f in f1_scores],
+                textposition="auto",
+                hovertemplate=f"<b>{{x}}</b><br>{label} F1: {{y:.4f}}<extra></extra>",
+                showlegend=False,
+            ),
+            row=1, col=class_idx+1
+        )
+        fig.update_yaxes(range=[0, 1.0], row=1, col=class_idx+1)
+    
+    fig.update_layout(
+        title="Per-Class F1-Score Across Models",
+        height=400,
+        plot_bgcolor="#f9fafb",
+        paper_bgcolor="#f9fafb",
+    )
+    return fig
+
+
+def make_model_radar_comparison(results: dict, labels: list) -> go.Figure:
+    """Radar chart for holistic model comparison."""
+    models = list(results.keys())
+    
+    fig = go.Figure()
+    
+    categories = ["Accuracy", "Weighted F1", "Low F1", "Medium F1", "High F1", "Severe F1"]
+    colors_radar = ["#6366f1", "#8b5cf6", "#ec4899"]
+    
+    for idx, model_name in enumerate(models):
+        accuracy = results[model_name]["accuracy"]
+        f1_weighted = results[model_name]["f1_weighted"]
+        report = results[model_name]["classification_report"]
+        
+        f1_values = [
+            report.get(labels[0], {}).get("f1-score", 0),
+            report.get(labels[1], {}).get("f1-score", 0),
+            report.get(labels[2], {}).get("f1-score", 0),
+            report.get(labels[3], {}).get("f1-score", 0),
+        ]
+        
+        values = [accuracy, f1_weighted] + f1_values
+        
+        fig.add_trace(go.Scatterpolar(
+            r=values,
+            theta=categories,
+            fill="toself",
+            name=model_name,
+            line_color=colors_radar[idx],
+            opacity=0.6,
+        ))
+    
+    fig.update_layout(
+        polar=dict(radialaxis=dict(visible=True, range=[0.85, 1.0])),
+        showlegend=True,
+        height=500,
+        title="Multi-Metric Model Comparison",
+        plot_bgcolor="#f9fafb",
+        paper_bgcolor="#f9fafb",
+    )
+    return fig
+

@@ -110,6 +110,21 @@ def save_artifacts(model, results, fi_df, output_dir="."):
     with open(os.path.join(output_dir, "model_results.json"), "w") as f:
         json.dump(clean, f, indent=2)
     print("✅ model_results.json saved")
+    
+    # Save full comparison results with confusion matrices and per-class metrics
+    full_results = {}
+    for n, r in results.items():
+        full_results[n] = {
+            "accuracy": r["accuracy"],
+            "f1_weighted": r["f1_weighted"],
+            "train_time_sec": r["train_time_sec"],
+            "confusion_matrix": r["confusion_matrix"],
+            "classification_report": {k: v for k, v in r["report"].items() 
+                                     if k in CONGESTION_LABELS or k in ["accuracy", "macro avg", "weighted avg"]},
+        }
+    with open(os.path.join(output_dir, "model_comparison.json"), "w") as f:
+        json.dump(full_results, f, indent=2)
+    print("✅ model_comparison.json saved")
 
 
 def run_full_training(data_path: str, output_dir: str = "."):
