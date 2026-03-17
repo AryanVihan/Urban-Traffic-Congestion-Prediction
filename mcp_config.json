@@ -1,0 +1,125 @@
+{
+  "_comment": "MCP server registry for ForgeML Traffic Congestion Predictor.",
+  "_usage": "Add this file's mcpServers block to your Claude Desktop config or pass to an MCP client.",
+
+  "project": "ForgeML Traffic Congestion Predictor",
+  "version": "1.0.0",
+  "corridor": "Metro I-94, Minneapolis – Saint Paul",
+  "model":    "HistGradientBoostingClassifier (93.6% F1, 4-class congestion)",
+  "dataset":  "Metro_Interstate_Traffic_Volume.csv — 48,204 hourly records, 2012–2018",
+
+  "mcpServers": {
+    "traffic-prediction": {
+      "command":     "python",
+      "args":        ["-m", "mcp_servers.prediction_server"],
+      "description": "ML-powered congestion prediction, 24-hour risk forecasting, and feature inspection.",
+      "tools": [
+        "predict_congestion",
+        "predict_batch_hours",
+        "compute_risk_forecast",
+        "get_feature_vector",
+        "predict_now"
+      ],
+      "resources": [
+        "traffic://model/info",
+        "traffic://model/thresholds",
+        "traffic://model/feature_importance"
+      ],
+      "example_queries": [
+        "What will congestion be at 5 PM on Friday in August with light rain?",
+        "Predict congestion for rush hours [7, 8, 17, 18] on a Tuesday",
+        "Show me the 24-hour risk forecast for a rainy Monday in October",
+        "What are the top features driving traffic predictions?"
+      ]
+    },
+
+    "traffic-analytics": {
+      "command":     "python",
+      "args":        ["-m", "mcp_servers.analytics_server"],
+      "description": "Statistical analysis of 48K-record dataset — hourly profiles, weather effects, segment risk.",
+      "tools": [
+        "get_hourly_traffic_profile",
+        "get_congestion_distribution",
+        "get_weather_impact_summary",
+        "get_rush_hour_stats",
+        "compare_weekday_vs_weekend",
+        "get_segment_risk_for_hour",
+        "get_bottleneck_segments",
+        "get_dataset_overview"
+      ],
+      "resources": [
+        "traffic://dataset/summary",
+        "traffic://dataset/peak_analysis",
+        "traffic://segments/metadata"
+      ],
+      "example_queries": [
+        "Which hour of the day has the highest average traffic on I-94?",
+        "How does rainy weather affect Metro I-94 traffic volumes?",
+        "What percentage of records are High or Severe congestion?",
+        "Which I-94 segments are High or above at 5 PM on Friday?"
+      ]
+    },
+
+    "traffic-insights": {
+      "command":     "python",
+      "args":        ["-m", "mcp_servers.insights_server"],
+      "description": "Rule-based AI explanation engine — why predictions are made, action plans, system insights.",
+      "tools": [
+        "explain_prediction_for_conditions",
+        "get_action_plan",
+        "get_system_insights",
+        "get_level_description",
+        "generate_congestion_narrative"
+      ],
+      "resources": [
+        "traffic://insights/system",
+        "traffic://insights/level_guide",
+        "traffic://insights/rush_schedule"
+      ],
+      "example_queries": [
+        "Why is traffic predicted as Severe at 5 PM on a Friday?",
+        "What actions should traffic managers take during High congestion?",
+        "Give me a natural-language traffic intelligence report for Tuesday at 8 AM",
+        "What are the most important system-level insights from the data?"
+      ]
+    },
+
+    "traffic-map": {
+      "command":     "python",
+      "args":        ["-m", "mcp_servers.map_server"],
+      "description": "I-94 corridor spatial intelligence — per-segment congestion, bottleneck history, geometry.",
+      "tools": [
+        "get_corridor_congestion_map",
+        "get_bottleneck_segments",
+        "get_segment_history",
+        "list_segments"
+      ],
+      "resources": [
+        "traffic://map/segments",
+        "traffic://map/bottleneck_factors"
+      ],
+      "example_queries": [
+        "Which I-94 segments are congested at 8 AM on Monday?",
+        "What is the worst hour for the I-35W interchange segment?",
+        "List all I-94 segments that are historically bottlenecks",
+        "Show the full corridor congestion map for Friday evening rush"
+      ]
+    }
+  },
+
+  "transport": "stdio",
+
+  "claude_desktop_integration": {
+    "_note": "To use with Claude Desktop, add the mcpServers entries above to:",
+    "_path_mac":     "~/Library/Application Support/Claude/claude_desktop_config.json",
+    "_path_windows": "%APPDATA%\\Claude\\claude_desktop_config.json",
+    "_remember":     "Set the 'cwd' field to the project root directory for each server."
+  },
+
+  "run_server_examples": {
+    "prediction": "python -m mcp_servers.prediction_server",
+    "analytics":  "python -m mcp_servers.analytics_server",
+    "insights":   "python -m mcp_servers.insights_server",
+    "map":        "python -m mcp_servers.map_server"
+  }
+}

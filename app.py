@@ -58,6 +58,7 @@ from styles import (
     inject_styles, page_header, metric_row,
     glass_section, glass_badge, congestion_banner,
 )
+from mcp_servers.bridge import MCPBridge
 
 # ── Inject design system (must be first after set_page_config) ────
 inject_styles()
@@ -90,6 +91,10 @@ def load_fi():
 def load_results():
     return json.load(open(RES_PATH)) if os.path.exists(RES_PATH) else None
 
+@st.cache_resource(show_spinner="Connecting MCP bridge…")
+def get_mcp_bridge():
+    return MCPBridge()
+
 
 # ── Sidebar ──────────────────────────────────────────────────────
 with st.sidebar:
@@ -110,7 +115,7 @@ with st.sidebar:
         "📊 Overview", "📈 Traffic Patterns",
         "🔮 Predict", "💡 AI Insights", "🏆 Model Report",
         "🗺️ Traffic Map", "🔥 Heatmaps", "🌦️ Weather Analysis",
-        "🎯 Risk Scoring",
+        "🎯 Risk Scoring", "🤖 MCP Live Intelligence",
     ], label_visibility="collapsed")
 
     st.divider()
@@ -790,3 +795,311 @@ elif page == "🎯 Risk Scoring":
             f"Weekday peak month: **{MONTH_NAMES[peak_month_wk]}** &nbsp;·&nbsp; "
             f"Weekend peak month: **{MONTH_NAMES[peak_month_wkd]}**"
         )
+
+
+# ════════════════════════════════════════════════════════════════
+#  PAGE 10 — MCP LIVE INTELLIGENCE
+# ════════════════════════════════════════════════════════════════
+elif page == "🤖 MCP Live Intelligence":
+    st.markdown(page_header("🤖", "MCP Live Intelligence",
+        "Real-time traffic intelligence powered by 4 MCP-compatible servers"), unsafe_allow_html=True)
+
+    if model is None:
+        st.warning("⚠️ Train the model first (sidebar button).")
+        st.stop()
+
+    bridge = get_mcp_bridge()
+
+    # ── Live weather controls (sidebar) ──────────────────────────────────────
+    with st.sidebar:
+        st.divider()
+        st.subheader("🌤️ Live Conditions")
+        live_rain   = st.slider("Rain (mm/hr)", 0.0, 30.0, 0.0, step=0.5, key="live_rain")
+        live_temp   = st.slider("Temp (°C)", -20, 40, 15, key="live_temp")
+        live_lag    = st.slider("Last hr volume", 0, 7280, 3000, key="live_lag")
+        live_snow   = st.slider("Snow (cm/hr)", 0.0, 0.5, 0.0, step=0.05, key="live_snow")
+        live_wx     = st.selectbox("Weather", [
+            "Clear","Clouds","Rain","Drizzle","Mist","Fog",
+            "Snow","Thunderstorm","Haze","Squall","Smoke"
+        ], key="live_wx")
+        refresh_btn = st.button("🔄 Refresh Intelligence", type="primary", width="stretch", key="live_refresh")
+
+    tab_live, tab_forecast, tab_corridor, tab_servers = st.tabs([
+        "⚡ Live Now", "📅 24h Forecast", "🗺️ Corridor Status", "🖥️ MCP Servers",
+    ])
+
+    # Compute full live report once for all tabs
+    with st.spinner("Fetching live MCP intelligence…"):
+        try:
+            report = bridge.live_intelligence_report(
+                rain_1h=live_rain, temp_celsius=live_temp,
+                lag_1h=float(live_lag), snow_1h=live_snow, weather_main=live_wx,
+            )
+            mcp_ok = True
+        except Exception as ex:
+            st.error(f"❌ MCP Bridge error: {ex}")
+            mcp_ok = False
+            st.stop()
+
+    # ── TAB 1: Live Now ──────────────────────────────────────────────────────
+    with tab_live:
+        now_pred  = report["current"]
+        pred_info = now_pred["prediction"]
+        label     = pred_info["label"]
+        conf      = pred_info["confidence"]
+        col_map   = {"Low":"#22c55e","Medium":"#f59e0b","High":"#f97316","Severe":"#ef4444"}
+        col       = col_map[label]
+
+        # Timestamp header
+        st.markdown(
+            f"<div style='text-align:center;font-size:0.85rem;color:#94a3b8;"
+            f"font-weight:600;letter-spacing:0.06em;text-transform:uppercase;"
+            f"margin-bottom:16px'>"
+            f"🕐 {report['local_time']} · {report['day_name']} · {report['date']}</div>",
+            unsafe_allow_html=True,
+        )
+
+        # Current prediction banner
+        st.markdown(congestion_banner(
+            label, conf, pred_info.get("inference_ms", 0.0),
+            now_pred["explanation"]["level_info"]["impact"]
+        ), unsafe_allow_html=True)
+
+        # Next-hour outlook
+        nxt        = report["next_hour"]
+        nxt_col    = col_map[nxt["label"]]
+        nxt_arrow  = "↗️" if nxt["label"] > label else ("↘️" if nxt["label"] < label else "→")
+        st.markdown(
+            f"<div style='background:rgba(255,255,255,0.65);backdrop-filter:blur(12px);"
+            f"border:1px solid rgba(255,255,255,0.8);border-radius:16px;padding:14px 20px;"
+            f"margin:12px 0;display:flex;align-items:center;gap:16px;"
+            f"box-shadow:0 4px 20px rgba(99,102,241,0.08)'>"
+            f"<div style='font-size:1.5rem'>{nxt_arrow}</div>"
+            f"<div><div style='font-size:0.75rem;font-weight:700;text-transform:uppercase;"
+            f"color:#94a3b8;letter-spacing:0.08em'>Next Hour Outlook ({nxt['hour']:02d}:00)</div>"
+            f"<div style='font-size:1rem;font-weight:800;color:{nxt_col}'>{nxt['label']}</div>"
+            f"<div style='font-size:0.78rem;color:#64748b'>Confidence: {nxt['confidence']}%</div></div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+        # Alert panel
+        alerts = report["alerts"]
+        if alerts["alert_active"]:
+            st.markdown(
+                f"<div style='background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);"
+                f"border-radius:14px;padding:14px 18px;margin:12px 0'>"
+                f"<div style='font-weight:700;color:#dc2626;font-size:0.95rem;margin-bottom:8px'>"
+                f"🚨 Active Alert — {alerts['alert_count']} segment(s) High or above</div>",
+                unsafe_allow_html=True,
+            )
+            for seg in alerts["high_or_severe_segments"]:
+                seg_col = col_map.get(seg["segment_label"], "#6366f1")
+                st.markdown(
+                    f"<div style='padding:4px 10px;margin-bottom:4px;font-size:0.84rem;"
+                    f"border-left:3px solid {seg_col};color:#374151'>"
+                    f"<b>{seg['name']}</b> · {seg['exit']} "
+                    f"<span style='background:{seg_col}22;color:{seg_col};font-weight:700;"
+                    f"padding:2px 8px;border-radius:99px;font-size:0.75rem'>"
+                    f"{seg['segment_label']}</span></div>",
+                    unsafe_allow_html=True,
+                )
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.success("✅ No active alerts — all segments at Medium or below")
+
+        # Conditions used
+        cond = now_pred["conditions"]
+        st.markdown(metric_row([
+            {"icon": "⏰", "value": f"{cond['hour']:02d}:00",  "label": "Current Hour",   "color": "#6366f1"},
+            {"icon": "🌡️", "value": f"{live_temp}°C",          "label": "Temperature",    "color": "#06b6d4"},
+            {"icon": "🌧️", "value": f"{live_rain}mm/hr",       "label": "Rainfall",       "color": "#3b82f6"},
+            {"icon": "🚗", "value": f"{live_lag:,}",           "label": "Lag Volume",     "color": "#8b5cf6"},
+        ]), unsafe_allow_html=True)
+
+        # Explanation
+        st.markdown(glass_section("Why This Prediction?", "🧠"), unsafe_allow_html=True)
+        st.markdown(
+            f"<p style='font-style:italic;color:#475569;font-size:0.9rem;line-height:1.6;"
+            f"padding:10px 14px;background:rgba(255,255,255,0.6);border-radius:12px;"
+            f"border:1px solid rgba(255,255,255,0.8)'>"
+            f"{now_pred['explanation']['narrative']}</p>",
+            unsafe_allow_html=True,
+        )
+
+    # ── TAB 2: 24h Forecast ──────────────────────────────────────────────────
+    with tab_forecast:
+        import pandas as pd
+        risk_records = report["risk_forecast"]
+        risk_df = pd.DataFrame(risk_records)
+
+        severe_hrs = sum(1 for r in risk_records if r["label"] == "Severe")
+        high_hrs   = sum(1 for r in risk_records if r["label"] == "High")
+        peak_risk  = max(risk_records, key=lambda r: r["risk_score"])
+        avg_risk   = round(sum(r["risk_score"] for r in risk_records) / len(risk_records), 1)
+
+        st.markdown(metric_row([
+            {"icon": "🔴", "value": f"{severe_hrs}/24",       "label": "Severe Hours",    "color": "#ef4444"},
+            {"icon": "🟠", "value": f"{high_hrs}/24",         "label": "High Hours",      "color": "#f97316"},
+            {"icon": "⏰", "value": peak_risk["hour"],        "label": "Peak Risk Hour",  "color": "#8b5cf6"},
+            {"icon": "📊", "value": f"{avg_risk:.0f}/100",    "label": "Avg Risk Score",  "color": "#6366f1"},
+        ]), unsafe_allow_html=True)
+
+        st.plotly_chart(make_risk_chart(risk_df), use_container_width=True)
+        st.plotly_chart(make_risk_timeline(risk_df), use_container_width=True)
+
+        # Rush hour detail
+        st.markdown(glass_section("Rush Hour Predictions (MCP batch)", "⚡"), unsafe_allow_html=True)
+        from datetime import datetime as _dt
+        rush_hours = [7, 8, 9, 16, 17, 18]
+        rush_preds = bridge.predict_batch(
+            hours=rush_hours,
+            day_of_week=_dt.now().weekday(), month=_dt.now().month,
+            temp_celsius=live_temp, rain_1h=live_rain,
+            traffic_lag_1h=float(live_lag), weather_main=live_wx,
+        )
+        rush_cols = st.columns(len(rush_hours))
+        for i, rp in enumerate(rush_preds):
+            rc = col_map.get(rp["label"], "#6366f1")
+            rush_cols[i].markdown(
+                f"<div style='background:linear-gradient(135deg,{rc}22,{rc}11);"
+                f"border:1px solid {rc}44;border-radius:14px;padding:10px 8px;"
+                f"text-align:center;margin:0 2px'>"
+                f"<div style='font-size:0.72rem;color:#94a3b8;font-weight:700'>"
+                f"{rp['hour']:02d}:00</div>"
+                f"<div style='font-size:0.85rem;font-weight:800;color:{rc}'>{rp['label']}</div>"
+                f"<div style='font-size:0.68rem;color:#64748b'>{rp['confidence']}%</div></div>",
+                unsafe_allow_html=True,
+            )
+
+    # ── TAB 3: Corridor Status ───────────────────────────────────────────────
+    with tab_corridor:
+        corridor     = report["corridor"]
+        base_pred    = corridor["base_prediction"]
+        segments_lst = corridor["segments"]
+        summary      = corridor["summary"]
+
+        # Summary KPIs
+        b_col = col_map.get(base_pred["label"], "#6366f1")
+        st.markdown(metric_row([
+            {"icon": "🚦", "value": base_pred["label"],           "label": "Global Forecast",  "color": b_col},
+            {"icon": "🔴", "value": str(summary["severe_count"]), "label": "Severe Segments",  "color": "#ef4444"},
+            {"icon": "🟠", "value": str(summary["high_count"]),   "label": "High Segments",    "color": "#f97316"},
+            {"icon": "📍", "value": summary["worst_segment"][:14]+"…" if len(summary["worst_segment"])>14 else summary["worst_segment"],
+                           "label": "Worst Segment",              "color": "#8b5cf6"},
+        ]), unsafe_allow_html=True)
+
+        # Segment cards grid
+        st.markdown(glass_section("All 16 I-94 Segments", "🗺️"), unsafe_allow_html=True)
+        seg_cols_a = st.columns(2)
+        for i, seg in enumerate(segments_lst):
+            sc = col_map.get(seg["segment_label"], "#6366f1")
+            factor_icon = "⚠️" if seg["is_bottleneck"] else "✅"
+            seg_cols_a[i % 2].markdown(
+                f"<div style='background:rgba(255,255,255,0.65);backdrop-filter:blur(10px);"
+                f"border:1px solid {sc}33;border-radius:14px;padding:10px 14px;"
+                f"margin-bottom:8px;border-left:4px solid {sc};"
+                f"animation:fadeInLeft 0.3s ease {(i%8)*0.04}s both'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:center'>"
+                f"<span style='font-weight:700;font-size:0.82rem;color:#1e293b'>"
+                f"{factor_icon} {seg['name']}</span>"
+                f"<span style='background:{sc};color:white;font-weight:800;font-size:0.7rem;"
+                f"padding:2px 8px;border-radius:99px'>{seg['segment_label']}</span></div>"
+                f"<div style='font-size:0.72rem;color:#64748b;margin-top:3px'>"
+                f"{seg['exit']} · factor {seg['factor']:.2f}</div></div>",
+                unsafe_allow_html=True,
+            )
+
+        st.caption(
+            "🔴 Segments with factor > 1.0 are historical bottlenecks. "
+            "Colors: 🟢 Low · 🟡 Medium · 🟠 High · 🔴 Severe"
+        )
+
+    # ── TAB 4: MCP Server Health ─────────────────────────────────────────────
+    with tab_servers:
+        st.markdown(glass_section("MCP Server Registry", "🖥️"), unsafe_allow_html=True)
+
+        import json as _json
+        _cfg_path = os.path.join(DIR, "mcp_config.json")
+        _cfg      = _json.load(open(_cfg_path)) if os.path.exists(_cfg_path) else {}
+        servers   = _cfg.get("mcpServers", {})
+
+        server_icons = {
+            "traffic-prediction": "🔮",
+            "traffic-analytics":  "📊",
+            "traffic-insights":   "💡",
+            "traffic-map":        "🗺️",
+        }
+
+        for srv_name, srv_info in servers.items():
+            icon = server_icons.get(srv_name, "⚙️")
+            st.markdown(
+                f"<div style='background:rgba(255,255,255,0.70);backdrop-filter:blur(16px);"
+                f"border:1px solid rgba(255,255,255,0.80);border-radius:20px;"
+                f"padding:20px 24px;margin-bottom:14px;"
+                f"box-shadow:0 4px 24px rgba(99,102,241,0.08);'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:flex-start'>"
+                f"<div>"
+                f"<div style='font-size:1rem;font-weight:800;color:#1e293b'>{icon} {srv_name}</div>"
+                f"<div style='font-size:0.82rem;color:#475569;margin-top:4px'>{srv_info.get('description','')}</div>"
+                f"<div style='font-size:0.72rem;color:#94a3b8;margin-top:6px;font-family:monospace'>"
+                f"python {' '.join(srv_info.get('args', []))}</div></div>"
+                f"<div style='background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);"
+                f"border-radius:99px;padding:3px 12px;font-size:0.72rem;font-weight:700;color:#16a34a;"
+                f"white-space:nowrap;margin-top:4px'>✅ Registered</div></div>",
+                unsafe_allow_html=True,
+            )
+            # Tools and resources
+            tools_html = "".join(
+                f"<span style='background:rgba(99,102,241,0.10);color:#4f46e5;"
+                f"padding:3px 10px;border-radius:99px;font-size:0.72rem;margin:2px;"
+                f"display:inline-block;font-weight:600'>{t}</span>"
+                for t in srv_info.get("tools", [])
+            )
+            resources_html = "".join(
+                f"<span style='background:rgba(6,182,212,0.10);color:#0284c7;"
+                f"padding:3px 10px;border-radius:99px;font-size:0.72rem;margin:2px;"
+                f"display:inline-block;font-family:monospace'>{r}</span>"
+                for r in srv_info.get("resources", [])
+            )
+            if tools_html or resources_html:
+                st.markdown(
+                    f"<div style='margin-top:10px;padding:10px 14px;"
+                    f"background:rgba(248,250,252,0.8);border-radius:12px'>"
+                    f"{'<div style=margin-bottom:6px><b style=font-size:0.75rem;color:#64748b>TOOLS</b><br>' + tools_html + '</div>' if tools_html else ''}"
+                    f"{'<div><b style=font-size:0.75rem;color:#64748b>RESOURCES</b><br>' + resources_html + '</div>' if resources_html else ''}"
+                    f"</div></div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        # Integration info
+        st.divider()
+        st.markdown(glass_section("Claude Desktop Integration", "🔗"), unsafe_allow_html=True)
+        st.info(
+            "**To use these MCP servers with Claude Desktop:**\n\n"
+            "Add the `mcpServers` block from `mcp_config.json` to your Claude Desktop config:\n"
+            "- **Windows:** `%APPDATA%\\Claude\\claude_desktop_config.json`\n"
+            "- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`\n\n"
+            "Then ask Claude: *'What is the congestion on I-94 at 5 PM on Friday?'*"
+        )
+
+        # Example queries
+        st.markdown(glass_section("Example MCP Queries", "💬"), unsafe_allow_html=True)
+        example_queries = [
+            ("🔮 Prediction", "What will congestion be at 5 PM on Friday in August with light rain?"),
+            ("📊 Analytics",  "Which hour of the day has the highest average traffic on I-94?"),
+            ("💡 Insights",   "Why is traffic predicted as Severe at 5 PM on a Friday?"),
+            ("🗺️ Map",        "What is the worst hour for the I-35W interchange segment?"),
+        ]
+        for server_type, query in example_queries:
+            st.markdown(
+                f"<div style='padding:8px 14px;margin-bottom:6px;"
+                f"background:rgba(255,255,255,0.60);border-radius:12px;"
+                f"border-left:3px solid #6366f1;font-size:0.85rem;"
+                f"animation:fadeInLeft 0.3s ease both'>"
+                f"<span style='font-weight:700;color:#6366f1'>{server_type}</span> "
+                f"<span style='color:#374151'>{query}</span></div>",
+                unsafe_allow_html=True,
+            )
