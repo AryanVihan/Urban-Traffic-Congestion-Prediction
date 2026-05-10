@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      # Persist trained model artifacts so retraining survives container restart
+      - ./model.pkl:/app/model.pkl
+      - ./feature_importance.csv:/app/feature_importance.csv
+      - ./model_results.json:/app/model_results.json
+      - ./model_comparison.json:/app/model_comparison.json
+    restart: unless-stopped
+
+  mcp-prediction:
+    build: .
+    env_file:
+      - .env
+    command: ["python", "-m", "mcp_servers.prediction_server"]
+    restart: unless-stopped
+
+  mcp-analytics:
+    build: .
+    env_file:
+      - .env
+    command: ["python", "-m", "mcp_servers.analytics_server"]
+    restart: unless-stopped
+
+  mcp-insights:
+    build: .
+    env_file:
+      - .env
+    command: ["python", "-m", "mcp_servers.insights_server"]
+    restart: unless-stopped
+
+  mcp-map:
+    build: .
+    env_file:
+      - .env
+    command: ["python", "-m", "mcp_servers.map_server"]
+    restart: unless-stopped

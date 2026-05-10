@@ -1,7 +1,44 @@
 # Urban Traffic Intelligence System
 ### ForgeML — Metro I-94 Congestion Predictor (Minneapolis – Saint Paul)
 
-A production-grade ML pipeline and interactive intelligence platform for predicting, explaining, and visualising highway congestion. Built on 48,204 hourly sensor records (2012–2018), it trains three scikit-learn ensemble classifiers, selects the best by weighted F1, engineers 27 features including lag/rolling temporal memory, runs a 4-agent orchestration workflow for every prediction, and exposes the entire system through both an 11-page Streamlit dashboard and four Model Context Protocol (MCP) servers for Claude Desktop integration.
+A production-grade ML pipeline and interactive intelligence platform for predicting, explaining, and visualising highway congestion on the I-94 interstate in Minneapolis–Saint Paul, Minnesota. Built on 48,204 hourly sensor records (2012–2018), it achieves **93.69% accuracy** classifying traffic into 4 congestion levels, engineers 27 features including lag/rolling temporal memory, runs a 4-agent orchestration workflow for every prediction, and exposes the entire system through both an 11-page Streamlit dashboard and four Model Context Protocol (MCP) servers for Claude Desktop integration.
+
+---
+
+## Why This Project Stands Out
+
+| Aspect | Detail |
+|--------|--------|
+| **End-to-end ML pipeline** | Raw CSV → cleaning → 27-feature engineering → model training → serialized deployment |
+| **93.69% accuracy** | HistGradientBoosting outperforms RandomForest (92.54%) and ExtraTrees (91.06%) |
+| **Explainable AI** | Deterministic rule-based engine generates auditable plain-English explanations for every prediction |
+| **Multi-agent architecture** | 4-stage pipeline: DataAgent → PredictionAgent → InsightAgent → RecommendationAgent |
+| **Production-ready** | 1–3 ms inference latency, 5-second CPU training, Supabase cloud backend support |
+| **AI integration** | 4 FastMCP servers (22 tools, 11 resources) make the model fully queryable by Claude Desktop |
+| **Real-world data** | 6 years of hourly I-94 sensor readings from MnDOT — no synthetic data |
+| **Zero external dependencies** | No GPU, no API keys, no cloud required to run locally |
+
+---
+
+## Project Scale — By the Numbers
+
+| Metric | Value |
+|--------|-------|
+| Dataset records | 48,204 raw / 48,187 cleaned |
+| Historical coverage | 6 years (Oct 2012 – Sep 2018) |
+| Engineered features | 27 |
+| Models trained & compared | 3 |
+| Best model accuracy | **93.69%** |
+| Best model weighted F1 | **0.9368** |
+| Training time (CPU) | ~5 seconds |
+| Inference latency | 1–3 ms per prediction |
+| Dashboard pages | 11 |
+| Unique chart types | 18 |
+| I-94 segments mapped | 16 |
+| MCP tools | 22 (5 + 8 + 5 + 4) |
+| MCP resources | 11 (3 + 3 + 3 + 2) |
+| Agent pipeline stages | 4 |
+| Explanation rule blocks | 9 |
 
 ---
 
@@ -16,17 +53,18 @@ A production-grade ML pipeline and interactive intelligence platform for predict
 7. [Saved Artifacts](#saved-artifacts)
 8. [Model Performance](#model-performance)
 9. [Feature Importance (Permutation-Based)](#feature-importance-permutation-based)
-10. [4-Agent Orchestration — `agents.py`](#4-agent-orchestration--agentspy)
-11. [Rule-Based Insight Engine — `insights.py`](#rule-based-insight-engine--insightspy)
-12. [Analytics and Visualisations — `analytics.py`](#analytics-and-visualisations--analyticspy)
-13. [Interactive Corridor Map — `map_view.py`](#interactive-corridor-map--map_viewpy)
-14. [Streamlit Dashboard — `app.py`](#streamlit-dashboard--apppy)
-15. [MCP Servers — `mcp_servers/`](#mcp-servers--mcp_servers)
-16. [MCP Bridge — `mcp_servers/bridge.py`](#mcp-bridge--mcp_serversbridgepy)
-17. [UI Styling — `styles.py`](#ui-styling--stylespy)
-18. [Configuration Files](#configuration-files)
-19. [Dependencies](#dependencies)
-20. [Quick Start](#quick-start)
+10. [Key Findings](#key-findings)
+11. [4-Agent Orchestration — `agents.py`](#4-agent-orchestration--agentspy)
+12. [Rule-Based Insight Engine — `insights.py`](#rule-based-insight-engine--insightspy)
+13. [Analytics and Visualisations — `analytics.py`](#analytics-and-visualisations--analyticspy)
+14. [Interactive Corridor Map — `map_view.py`](#interactive-corridor-map--map_viewpy)
+15. [Streamlit Dashboard — `app.py`](#streamlit-dashboard--apppy)
+16. [MCP Servers — `mcp_servers/`](#mcp-servers--mcp_servers)
+17. [MCP Bridge — `mcp_servers/bridge.py`](#mcp-bridge--mcp_serversbridgepy)
+18. [UI Styling — `styles.py`](#ui-styling--stylespy)
+19. [Configuration Files](#configuration-files)
+20. [Dependencies](#dependencies)
+21. [Quick Start](#quick-start)
 
 ---
 
@@ -528,6 +566,26 @@ Full ranked list from `feature_importance.csv`:
 | 11–27 | (weather, snow, holiday, cyclical month, etc.) | ≈0.000 | ~13% combined |
 
 **Critical insight:** `traffic_lag_1h` alone (36.4%) + the three time-of-day representations (`hour_cos` + `hour` + `hour_sin` = 39.7%) account for **76% of all predictive power**. All 8 weather features combined contribute less than 1%. Congestion on I-94 is overwhelmingly a function of *when* it is and *what it was doing an hour ago* — not weather conditions.
+
+---
+
+## Key Findings
+
+1. **Temporal momentum is the #1 predictor.** `traffic_lag_1h` (36.4% permutation importance) — what happened in the previous hour is the single most predictive feature, more important than all time-of-day features on any individual basis.
+
+2. **Time of day + lag governs 76% of predictions.** Combined, lag features and cyclical time encoding account for over three-quarters of the model's predictive power.
+
+3. **Weather barely matters.** All 8 weather features combined contribute less than 1% to predictions. I-94 congestion is a time-driven, not weather-driven, phenomenon.
+
+4. **Weekday vs weekend gap: 27%.** Weekday average is 3,812.7 vehicles/hr vs 2,745.3 on weekends. Rush hours add a further 34% premium over the weekday average (5,114.2 rush avg).
+
+5. **Rush hours are the critical window.** Morning (7–9 AM) and evening (4–6 PM) commutes dominate the High and Severe class distribution. Rush hour average (5,114.2 vehicles/hr) vs daily average represents the single largest driver of Severe predictions.
+
+6. **August is the worst month.** Monthly analysis identifies August (month 8) as the peak congestion period on this corridor. Holiday average (2,103.5) is 45% below the weekday average.
+
+7. **Model never confuses extremes.** The confusion matrix shows zero Low↔Severe misclassifications. All errors are between adjacent classes (Medium↔High), exactly where human domain experts would also disagree.
+
+8. **Bottleneck at I-35W Downtown.** The I-35W interchange in downtown Minneapolis has the highest spatial congestion factor (1.50) of all 16 mapped segments — a global "Medium" prediction becomes "Severe" at this segment.
 
 ---
 

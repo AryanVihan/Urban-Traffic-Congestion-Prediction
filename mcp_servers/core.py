@@ -18,6 +18,13 @@ from datetime import datetime, date
 from functools import lru_cache
 from typing import Optional
 
+# Load .env when running MCP servers locally
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # ── Resolve project root so imports work regardless of cwd ────────────────────
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)

@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+.env.local
+__pycache__
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+venv/
+.venv/
+
+# Exclude raw CSV — app loads data from Supabase at runtime
+Metro_Interstate_Traffic_Volume.csv

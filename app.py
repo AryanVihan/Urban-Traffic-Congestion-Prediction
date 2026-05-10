@@ -12,7 +12,14 @@ Edit DATA_PATH below to point to your CSV file.
 import sys, os, json, warnings
 warnings.filterwarnings("ignore")
 
-# ── Point this at your CSV ───────────────────────────────────────
+# Load .env file when running locally (no-op if already set by the host)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# ── Point this at your CSV (ignored when Supabase env vars are set) ──────────
 DATA_PATH = os.path.join(os.path.dirname(__file__), "Metro_Interstate_Traffic_Volume.csv")
 # Override via: streamlit run app.py -- --data /path/to/file.csv
 for i, arg in enumerate(sys.argv):

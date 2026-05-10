@@ -2,8 +2,13 @@
 data_processing.py
 ------------------
 Full data pipeline for the Metro Interstate Traffic dataset.
+
+Data source priority:
+  1. Supabase   — if SUPABASE_URL + SUPABASE_KEY env vars are set
+  2. Local CSV  — fallback (filepath argument or Metro_Interstate_Traffic_Volume.csv)
 """
 
+import os
 import pandas as pd
 import numpy as np
 import warnings
@@ -16,7 +21,48 @@ MORNING_RUSH = (7, 9)
 EVENING_RUSH = (16, 18)
 
 
-def load_raw(filepath: str) -> pd.DataFrame:
+def _load_from_supabase() -> pd.DataFrame:
+    """
+    Fetch all traffic rows from Supabase, paginating 1 000 rows at a time.
+    Called automatically when SUPABASE_URL and SUPABASE_KEY are set.
+    Requires: pip install supabase
+    """
+    from supabase import create_client
+
+    client   = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+    PAGE     = 1000
+    rows, offset = [], 0
+    while True:
+        batch = (
+            client.table("traffic_volume")
+            .select("*")
+            .range(offset, offset + PAGE - 1)
+            .execute()
+            .data
+        )
+        rows.extend(batch)
+        if len(batch) < PAGE:
+            break
+        offset += PAGE
+
+    df = pd.DataFrame(rows)
+    df["date_time"] = pd.to_datetime(df["date_time"])
+    df = df.drop(columns=["id"], errors="ignore")   # remove Supabase auto-id column
+    return df
+
+
+def load_raw(filepath: str = None) -> pd.DataFrame:
+    """
+    Load raw traffic data.
+    Uses Supabase when env vars are present; falls back to local CSV otherwise.
+    """
+    if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_KEY"):
+        return _load_from_supabase()
+    if filepath is None:
+        filepath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "Metro_Interstate_Traffic_Volume.csv",
+        )
     df = pd.read_csv(filepath)
     df["date_time"] = pd.to_datetime(df["date_time"])
     return df
@@ -114,7 +160,7 @@ def build_X_y(df: pd.DataFrame):
     return X, y
 
 
-def full_pipeline(filepath: str):
+def full_pipeline(filepath: str = None):
     df = load_raw(filepath)
     df = clean(df)
     df = engineer_features(df)
